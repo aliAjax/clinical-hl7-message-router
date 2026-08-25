@@ -1,0 +1,18 @@
+http:
+  address: ":8084"
+  timeout: 15s
+  maximum_body_bytes: 1048576
+mllp:
+  address: ":2575"
+  connection_limit: 256
+  idle_timeout: 30s
+storage:
+  database_url: "postgres://hl7:hl7@postgres:5432/hl7router?sslmode=disable"
+delivery:
+  maximum_attempts: 5
+  initial_backoff: 1s
+  maximum_backoff: 2m
+retention:
+  raw_message_days: 30
+  metadata_days: 90
+  dead_letter_days: 180
