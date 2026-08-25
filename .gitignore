@@ -1,0 +1,6 @@
+/bin/
+/router
+/mllp-simulator
+*.log
+.env
+.DS_Store

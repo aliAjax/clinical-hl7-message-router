@@ -1,0 +1,26 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: hl7
+      POSTGRES_PASSWORD: hl7
+      POSTGRES_DB: hl7router
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hl7 -d hl7router"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../migrations:/docker-entrypoint-initdb.d:ro
+  router:
+    build: ..
+    environment:
+      HTTP_ADDR: ":8084"
+      MLLP_ADDR: ":2575"
+      DATABASE_URL: "postgres://hl7:hl7@postgres:5432/hl7router?sslmode=disable"
+    ports: ["8084:8084", "2575:2575"]
+    depends_on:
+      postgres: {condition: service_healthy}
+volumes:
+  pgdata: {}
