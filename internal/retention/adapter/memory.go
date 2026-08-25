@@ -60,6 +60,9 @@ func (b *memoryBatch) Close() error {
 	m := b.cleaner
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	if b.closed {
+		return nil
+	}
 	m.active--
 	b.closed = true
 	return nil

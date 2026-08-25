@@ -71,28 +71,42 @@ func (s *Service) Run(ctx context.Context) (result Result, err error) {
 	}
 
 	for _, stage := range stages {
-		batch, beginErr := s.cleaner.BeginBatch(ctx, stage.kind, stage.cutoff, s.policy.BatchSize)
-		if beginErr != nil {
-			err = errors.Join(err, fmt.Errorf("begin %s cleanup: %w", stage.kind, beginErr))
-			continue
+		stageErr := s.runStage(ctx, stage, &result)
+		if stageErr != nil {
+			err = errors.Join(err, stageErr)
+			return result, err
 		}
-		defer func() {
-			if closeErr := batch.Close(); closeErr != nil {
-				err = fmt.Errorf("close %s cleanup: %w", stage.kind, closeErr)
-			}
-		}()
-
-		deleted, deleteErr := batch.Delete(ctx)
-		if deleteErr != nil {
-			err = errors.Join(err, fmt.Errorf("delete %s: %w", stage.kind, deleteErr))
-			continue
-		}
-
-		s.logger.DebugContext(ctx, "retention batch deleted", "kind", stage.kind, "deleted", deleted)
-		stage.store(&result, deleted)
 	}
 
 	result.CompletedAt = s.clock().UTC()
 	s.logger.InfoContext(ctx, "retention run completed", "raw_deleted", result.RawDeleted, "metadata_deleted", result.MetadataDeleted, "dead_letters_deleted", result.DeadLettersDeleted)
 	return result, err
+}
+
+// runStage opens a single cleanup batch, deletes the expired rows for the
+// stage, and guarantees the batch is released before returning. The deferred
+// Close runs at the end of the stage (not the end of the whole run) so batch
+// resources do not accumulate across stages. Any delete error halts the run
+// instead of continuing into later stages while holding a half-open batch.
+// Close errors are joined with (not assigned over) a prior delete error so the
+// delete failure is preserved in the returned error.
+func (s *Service) runStage(ctx context.Context, stage cleanupStage, result *Result) (err error) {
+	batch, beginErr := s.cleaner.BeginBatch(ctx, stage.kind, stage.cutoff, s.policy.BatchSize)
+	if beginErr != nil {
+		return fmt.Errorf("begin %s cleanup: %w", stage.kind, beginErr)
+	}
+	defer func() {
+		if closeErr := batch.Close(); closeErr != nil {
+			err = errors.Join(err, fmt.Errorf("close %s cleanup: %w", stage.kind, closeErr))
+		}
+	}()
+
+	deleted, deleteErr := batch.Delete(ctx)
+	if deleteErr != nil {
+		return fmt.Errorf("delete %s: %w", stage.kind, deleteErr)
+	}
+
+	s.logger.DebugContext(ctx, "retention batch deleted", "kind", stage.kind, "deleted", deleted)
+	stage.store(result, deleted)
+	return nil
 }
