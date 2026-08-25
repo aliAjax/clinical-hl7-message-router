@@ -1,0 +1,12 @@
+syntax = "proto3";
+package hl7router.v1;
+option go_package = "github.com/example/hl7v2-message-router/api/gen/hl7router/v1";
+
+service MessageQueryService {
+  rpc GetMessage(GetMessageRequest) returns (MessageTrace);
+  rpc StreamMessageEvents(StreamMessageEventsRequest) returns (stream MessageEvent);
+}
+message GetMessageRequest { string id = 1; }
+message StreamMessageEventsRequest { string message_id = 1; }
+message MessageTrace { string id = 1; string state = 2; string message_type = 3; string trigger = 4; repeated MessageEvent events = 5; }
+message MessageEvent { string id = 1; string message_id = 2; string kind = 3; int64 occurred_at_unix_ms = 4; map<string,string> metadata = 5; }
