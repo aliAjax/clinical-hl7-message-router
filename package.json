@@ -1,0 +1,8 @@
+{
+  "name": "clinical-hl7-message-router-console",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "node web/build.mjs"
+  }
+}

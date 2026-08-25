@@ -1,0 +1,12 @@
+id: mask-and-normalize-v1
+name: Mask patient name and normalize sex code
+version: 1
+operations:
+  - source: PID-5.1
+    destination: PID-5.1
+    mask: true
+  - source: PID-8
+    destination: PID-8
+    code_table: administrative-sex
+  - source: PID-7
+    destination: "date:PID-7:20060102:2006-01-02"
