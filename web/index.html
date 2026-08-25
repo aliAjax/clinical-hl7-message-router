@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Clinical HL7 Router</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <header>
+      <div>
+        <p class="eyebrow">Clinical integration</p>
+        <h1>HL7 message router</h1>
+      </div>
+      <div class="health" aria-live="polite">
+        <span id="health-dot"></span>
+        <span id="health-label">Checking gateway</span>
+      </div>
+    </header>
+    <main>
+      <section class="summary" aria-label="Router summary">
+        <div><span>Transport</span><strong>MLLP + HTTP</strong></div>
+        <div><span>Protocol</span><strong>HL7 v2.5</strong></div>
+        <div><span>Privacy</span><strong>Digest only</strong></div>
+      </section>
+      <section class="workspace">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Live probe</p>
+            <h2>Gateway endpoints</h2>
+          </div>
+          <button id="refresh" type="button" title="Refresh endpoint status" aria-label="Refresh endpoint status">&#8635;</button>
+        </div>
+        <table>
+          <thead><tr><th>Endpoint</th><th>Purpose</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>/healthz</td><td>Process health</td><td id="health-status">Pending</td></tr>
+            <tr><td>/readyz</td><td>Traffic readiness</td><td id="ready-status">Pending</td></tr>
+            <tr><td>/metrics</td><td>Message counters</td><td id="metrics-status">Pending</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+    <script src="./app.js"></script>
+  </body>
+</html>
