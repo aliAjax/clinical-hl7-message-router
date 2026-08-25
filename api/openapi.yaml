@@ -1,0 +1,87 @@
+openapi: 3.0.3
+info:
+  title: HL7 v2 Message Router API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8084
+paths:
+  /healthz:
+    get:
+      operationId: health
+      responses: {"200": {description: Healthy}}
+  /readyz:
+    get:
+      operationId: readiness
+      responses: {"200": {description: Ready}, "503": {description: Not ready}}
+  /metrics:
+    get:
+      operationId: metrics
+      responses: {"200": {description: Prometheus metrics}}
+  /v1/targets:
+    post:
+      operationId: createTarget
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/Target'}}}
+      responses: {"201": {description: Created}, "400": {description: Invalid request}}
+  /v1/routes:
+    post:
+      operationId: createRoute
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/Route'}}}
+      responses: {"201": {description: Created}, "400": {description: Invalid request}}
+  /v1/routes/{id}/validate:
+    post:
+      operationId: validateRoute
+      parameters: [{$ref: '#/components/parameters/ID'}]
+      responses: {"200": {description: Valid}, "422": {description: Invalid draft}}
+  /v1/routes/{id}/publish:
+    post:
+      operationId: publishRoute
+      parameters: [{$ref: '#/components/parameters/ID'}]
+      responses: {"200": {description: Published}, "404": {description: Not found}}
+  /v1/messages:
+    post:
+      operationId: submitMessage
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/MessageInput'}}}
+      responses: {"202": {description: Accepted}, "200": {description: Duplicate}, "422": {description: Invalid HL7}}
+  /v1/messages/{id}:
+    get:
+      operationId: getMessage
+      parameters: [{$ref: '#/components/parameters/ID'}]
+      responses: {"200": {description: Message trace}, "404": {description: Not found}}
+  /v1/messages/{id}/replay:
+    post:
+      operationId: replayMessage
+      parameters: [{$ref: '#/components/parameters/ID'}]
+      responses: {"202": {description: Replay accepted}, "404": {description: Not found}}
+  /v1/dead-letters:
+    get:
+      operationId: listDeadLetters
+      responses: {"200": {description: Dead letters}}
+components:
+  parameters:
+    ID: {name: id, in: path, required: true, schema: {type: string}}
+  schemas:
+    Target:
+      type: object
+      required: [ID, Name, Address]
+      properties: {ID: {type: string}, Name: {type: string}, Address: {type: string}}
+    Route:
+      type: object
+      required: [ID, TargetIDs]
+      properties:
+        ID: {type: string}
+        Name: {type: string}
+        MessageType: {type: string}
+        Trigger: {type: string}
+        SendingFacility: {type: string}
+        TargetIDs: {type: array, items: {type: string}}
+        Parallel: {type: boolean}
+    MessageInput:
+      type: object
+      required: [raw]
+      properties: {raw: {type: string}, mapping_id: {type: string}}
